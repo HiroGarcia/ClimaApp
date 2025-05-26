@@ -1,13 +1,15 @@
+import 'package:climapp/app/consts/images_url.dart';
+import 'package:climapp/app/models/weather_model.dart';
 import 'package:climapp/utils/colors.dart';
 import 'package:climapp/utils/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class WeatherCard extends StatelessWidget {
-  const WeatherCard({super.key, required this.cityName, required this.temperature, required this.onTap});
+  const WeatherCard({super.key, required this.onTap, required this.weather});
 
-  final String cityName;
-  final String temperature;
   final Function onTap;
+  final WeatherModel weather;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +17,9 @@ class WeatherCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(15)),
-        onTap: () { onTap(); },
+        onTap: () {
+          onTap();
+        },
         child: Ink(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
@@ -27,9 +31,15 @@ class WeatherCard extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              const Icon(Icons.sunny),
-              Text(cityName),
-              Text(temperature, style: extraLargeBold,),
+              SvgPicture.network(
+                '$weatherConditionUrl${weather.conditionSlug}.svg',
+                width: 32,
+              ),
+              Text(weather.city),
+              Text(
+                '${weather.temp}°',
+                style: extraLargeBold,
+              ),
             ],
           ),
         ),
@@ -38,20 +48,28 @@ class WeatherCard extends StatelessWidget {
   }
 }
 
-
 class VerticalWeatherCard extends StatelessWidget {
-  const VerticalWeatherCard({super.key, required this.weekDay, required this.temperature, required this.date});
+  const VerticalWeatherCard({
+    super.key,
+    required this.weekDay,
+    required this.temperature,
+    required this.date,
+    required this.moonPhase,
+  });
 
   final String weekDay;
   final String date;
   final String temperature;
+  final String moonPhase;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(
+        width: 100,
         padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(right: 8),
         decoration: const BoxDecoration(
           color: fillTransparente,
           borderRadius: BorderRadius.all(
@@ -62,13 +80,17 @@ class VerticalWeatherCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Text(weekDay),
-            const SizedBox(height: 4,),
-            Text(date),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Icon(Icons.sunny),
+            const SizedBox(
+              height: 4,
             ),
-            Text(temperature, style: largeSemibold,),
+            Text(date),
+            Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Image.network('$moonPhaseUrl$moonPhase.png')),
+            Text(
+              temperature,
+              style: largeSemibold,
+            ),
           ],
         ),
       ),
@@ -77,7 +99,9 @@ class VerticalWeatherCard extends StatelessWidget {
 }
 
 class DetailedWeatherCard extends StatelessWidget {
-  const DetailedWeatherCard({super.key});
+  const DetailedWeatherCard({super.key, required this.weather});
+
+  final WeatherModel weather;
 
   @override
   Widget build(BuildContext context) {
@@ -89,12 +113,25 @@ class DetailedWeatherCard extends StatelessWidget {
       ),
       child: Column(
         children: <Widget>[
-          const Text("Hoje (03/12)", style: mediumSemibold,),
-          const SizedBox(height: 24,),
-          const Icon(Icons.sunny, size: 64,),
-          Text("32°", style: extraLargeBold.copyWith(fontSize: 42),),
-          const Text("Sol entre nuvens"),
-          const SizedBox(height: 24,),
+          Text(
+            "Hoje (${weather.date})",
+            style: mediumSemibold,
+          ),
+          const SizedBox(
+            height: 24,
+          ),
+          SvgPicture.network(
+            '$weatherConditionUrl${weather.conditionSlug}.svg',
+            width: 64,
+          ),
+          Text(
+            "${weather.temp}°",
+            style: extraLargeBold.copyWith(fontSize: 42),
+          ),
+          Text(weather.description),
+          const SizedBox(
+            height: 24,
+          ),
           Row(
             children: <Widget>[
               Container(
@@ -104,19 +141,26 @@ class DetailedWeatherCard extends StatelessWidget {
                 decoration: const BoxDecoration(
                   color: Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.all(Radius.circular(8)),
-                  image: DecorationImage(image: AssetImage("assets/img/water_drop.png"), alignment: Alignment.center),
+                  image: DecorationImage(
+                      image: AssetImage("assets/img/water_drop.png"),
+                      alignment: Alignment.center),
                 ),
               ),
-              const Text("Umidade:", style: mediumSemibold,),
-              const Expanded(
+              const Text(
+                "Umidade:",
+                style: mediumSemibold,
+              ),
+              Expanded(
                 child: Text(
-                  "80%",
+                  "${weather.humidity}%",
                   textAlign: TextAlign.right,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8,),
+          const SizedBox(
+            height: 8,
+          ),
           Row(
             children: <Widget>[
               Container(
@@ -126,12 +170,19 @@ class DetailedWeatherCard extends StatelessWidget {
                 decoration: const BoxDecoration(
                   color: Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.all(Radius.circular(8)),
-                  image: DecorationImage(image: AssetImage("assets/img/device_thermostat.png"), alignment: Alignment.center),
+                  image: DecorationImage(
+                      image: AssetImage("assets/img/device_thermostat.png"),
+                      alignment: Alignment.center),
                 ),
               ),
-              const Text("Min/Max:", style: mediumSemibold,),
-              const Expanded(
-                child: Text("20/34°", textAlign: TextAlign.right),
+              const Text(
+                "Min/Max:",
+                style: mediumSemibold,
+              ),
+              Expanded(
+                child: Text(
+                    "${weather.forecast[0].min}/${weather.forecast[0].max}°",
+                    textAlign: TextAlign.right),
               ),
             ],
           ),
